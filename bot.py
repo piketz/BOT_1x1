@@ -16,9 +16,8 @@ elo = MultiElo()
 dbg_info_in_channel = 'no'
 dbg_info_in_console = 'yes'
 days_create_match=1
-start_elo = 101
+start_elo = 100
 
-#test
 
 @bot.event
 async def on_ready():
