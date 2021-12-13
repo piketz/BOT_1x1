@@ -107,16 +107,18 @@ class bot_loop(commands.Cog):
             bd_backup()
             # создать новые матчи
             pari = create_new_matchs()
-            for i in pari:
+            for i in pari[0]:
                 if dbg_info_in_console == 'yes': print(f'msg {i[0]} против {i[1]}')
                 message = await channel_dbg.send('<@' + i[0] + '> vs <@' + i[1] + '>')  # отправляем и получаем ИД сообщения о матче
                 if dbg_info_in_console == 'yes': print('DBG_ создан матч ' + str(message.id))
                 # cur.execute('INSERT INTO {} VALUES(?, ?, ?, ?, ?, ?, ?, ?)'.format(bd_match),(message.id,i[0],i[1],0,0,0,0,0)).fetchone()
                 cur.execute('INSERT INTO {} (id,user_1,user_2) VALUES(?, ?, ?)'.format(bd_match),(message.id, i[0], i[1])).fetchone()
                 base.commit()
+            pari[1] = str(pari[1])
+            # print(f' DBG t2 str(pari[1][3:-2]) = {str(pari[1][2:-2])} type = {type(pari[1])}')
+            await ctx.send('<@' + str(pari[1][2:-2]) + '> остался без соперника')  # один остался без пары
             # создать запись о датах начала и конца недели
-            cur.execute('INSERT INTO weekend (date_start,date_end,player_play,player_not_play) VALUES (?,?,?,?)',
-                        (str(now), str(endmatchtime), 0, 0)).fetchone()
+            cur.execute('INSERT INTO weekend (date_start,date_end,player_play,player_not_play) VALUES (?,?,?,?)',(str(now), str(endmatchtime), 0, 0)).fetchone()
             base.commit()
             bd_backup()
 
@@ -311,7 +313,7 @@ def create_new_matchs():
         name[str(user[0])] = user[2]
 
     # if dbg_info_in_console == 'yes':print('список игроков: a =' + str(a))
-    if dbg_info_in_console == 'yes': print('рейтинг игроков: s =' + str(s))
+    # if dbg_info_in_console == 'yes': print('рейтинг игроков: s =' + str(s))
 
     raunds = {i: abs(s[i[0]] - s[i[1]]) for i in itertools.combinations(a, 2)}
     # print('raunds= ',raunds)
@@ -329,8 +331,14 @@ def create_new_matchs():
             pari_n.append((name[i[0][0]], name[i[0][1]]))
             pari.append((i[0][0], i[0][1]))
 
-    if dbg_info_in_console == 'yes': print(f' Пары для игры \n{pari_n}')
-    return (pari)
+    if dbg_info_in_console == 'yes':
+        print(f' Пары для игры \n{pari_n}')
+        print(f' Этот ID не играет сегодня {set(a) - set(filter)}, его имя {name[list(set(a) - set(filter))[0]]}')
+     #   non_in_game_id = []
+     #   non_in_game_id.append(set(a) - set(filter))
+        non_in_game_id = set(a) - set(filter)
+    return [pari,non_in_game_id]
+
 
 
 #  for i in pari:
@@ -343,14 +351,17 @@ def create_new_matchs():
 @bot.command(brief='Тестовая команда для создания матчей')
 async def t2(ctx):
     pari = create_new_matchs()
-    for i in pari:
+    if dbg_info_in_console == 'yes': print(f'DBG pari  =   {str(pari[1])}  type {type(pari)}')
+    for i in pari[0]:
         if dbg_info_in_console == 'yes': print(f'msg {i[0]} против {i[1]}')
         message = await ctx.send('<@' + i[0] + '> vs <@' + i[1] + '>')  # отправляем и получаем ИД сообщения о матче
         if dbg_info_in_console == 'yes': print('DBG_ создан матч ' + str(message.id))
         # cur.execute('INSERT INTO {} VALUES(?, ?, ?, ?, ?, ?, ?, ?)'.format(bd_match),(message.id,i[0],i[1],0,0,0,0,0)).fetchone()
         cur.execute('INSERT INTO {} (id,user_1,user_2) VALUES(?, ?, ?)'.format(bd_match),(message.id, i[0], i[1])).fetchone()
         base.commit()
-
+    pari[1] = str(pari[1])
+   # print(f' DBG t2 str(pari[1][3:-2]) = {str(pari[1][2:-2])} type = {type(pari[1])}')
+    await ctx.send('<@' + str(pari[1][2:-2]) + '> остался без соперника')  # один остался без пары
 
 @bot.command(brief='Create challenge', description='Через пробел указать противника')
 async def vs(ctx, arg=None):
