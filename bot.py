@@ -230,13 +230,15 @@ async def on_raw_reaction_add(payload):  # чекает новые реакци�
                     name1 = cur.execute('SELECT user_1 FROM {} WHERE id == ?'.format(bd_match), (id_mess,)).fetchone()
                     await channel.send('<@' + str(user_id) + '> победил <@' + str(name1[0]) + '>')
                     cur.execute('Update {} set win2 = ?, match_end = ?  WHERE id == ?'.format(bd_match),('win', '1', id_mess,)).fetchone()
+                    base.commit()
                     cur.execute('Update {} set win = win + ? WHERE user_id = ?'.format(bd_user),('1', str(user_id))).fetchone()
-                    base.commit
+                    base.commit()
                     end_match_elo(str(user_id), str(name1[0]), id_mess)
                     await message.add_reaction('🤝')
                     if dbg_info_in_console == 'yes': print('DBG_ 🚩 первый  второй ✅ ')
                 else:
                     cur.execute('Update {} set win2 = ?  WHERE id == ?'.format(bd_match), ('win', id_mess,)).fetchone()
+                    base.commit()
                     cur.execute('Update {} set win = win + ? WHERE user_id = ?'.format(bd_user),('1', str(user_id))).fetchone()
                     base.commit()
 
