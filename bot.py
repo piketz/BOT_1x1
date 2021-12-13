@@ -63,16 +63,15 @@ class bot_loop(commands.Cog):
     @tasks.loop(minutes=1.0)  # выполняется каждую минуту
     async def printer(self):
         now = datetime.datetime.now()
-        endmatchtime = now + datetime.timedelta(days=days_create_match, hours=0, minutes=0, seconds=0)
-        # запрос из бд по самой последней дате в колонке date_end
-        lastgame_time_sql = cur.execute('SELECT MAX(date_end) FROM weekend').fetchone()
+        endmatchtime2 = now + datetime.timedelta(days=days_create_match)
+        endmatchtime = endmatchtime2.replace(hour=0, minute=0, second=0, microsecond=0)
+
+        lastgame_time_sql = cur.execute('SELECT MAX(date_end) FROM weekend').fetchone()  # запрос из бд по самой последней дате в колонке date_end
         lastgame_time = datetime.datetime.strptime(lastgame_time_sql[0], "%Y-%m-%d %H:%M:%S.%f")
-        # 2021-12-01 00:00:00.0000
-        #  lastgame_time = datetime.datetime(2021, 12, 4, 0, 0) #Здесь надо подставить дату старта последней игры из запроса выше
+                                                                        # 2021-12-01 00:00:00.0000
         # next7days = lastgame_time + datetime.timedelta(days=days_create_match) #Добавить N дней к ней
         channel_dbg = await bot.fetch_channel('916723980113682452')  # impulse_test channel 916723980113682452 #dbg 912553521629495336
-        # print('lastgame_time = '+str(lastgame_time))
-        #  await channel_dbg.send('прошло минут: '+str(self.index)+' timestamp: '+str(timestamp))
+
         # print('now ----  lastgame_time '+str(now.day)+'.'+str(now.month)+'.'+str(now.year)+'  ----  '+str(lastgame_time.day)+'.'+str(lastgame_time.month)+'.'+str(lastgame_time.year))
         #  print('endmatchtime = '+str(endmatchtime))
         chk_ok = cur.execute('SELECT id FROM match where match_end=0 and check_1=1 and check_2=1 and check_ok=0')
@@ -82,12 +81,11 @@ class bot_loop(commands.Cog):
             # print(f'DBG_ 🚩 [INFO] i = {i} type = {type(i)}')
             cur.execute(f'UPDATE match SET check_ok = 1 WHERE id = {i}')
             base.commit()
+        lastgame_time_int = lastgame_time - datetime.timedelta(hours=12)
 
         # print(f'DBG_ 🚩 [INFO] list a= {a}')
-
         # print(type(chk_ok))
 
-        lastgame_time_int = lastgame_time - datetime.timedelta(hours=12)
         # print(f'DBG_ 🚩 [INFO] lastgame_time :  = {lastgame_time} lastgame_time-12 = {lastgame_time_int}')
 
         # if now >= lastgame_time_int:# and chk_ok[1] == '0':
@@ -115,7 +113,6 @@ class bot_loop(commands.Cog):
                 cur.execute('INSERT INTO {} (id,user_1,user_2) VALUES(?, ?, ?)'.format(bd_match),(message.id, i[0], i[1])).fetchone()
                 base.commit()
             pari[1] = str(pari[1])
-            # print(f' DBG t2 str(pari[1][3:-2]) = {str(pari[1][2:-2])} type = {type(pari[1])}')
             await ctx.send('<@' + str(pari[1][2:-2]) + '> остался без соперника')  # один остался без пары
             # создать запись о датах начала и конца недели
             cur.execute('INSERT INTO weekend (date_start,date_end,player_play,player_not_play) VALUES (?,?,?,?)',(str(now), str(endmatchtime), 0, 0)).fetchone()
