@@ -1,3 +1,3 @@
 # bot_disco
 
-use https://github.com/djcunningham0/multielo
+uses https://github.com/djcunningham0/multielo
