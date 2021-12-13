@@ -370,7 +370,7 @@ async def t2(ctx):
 
 
 @bot.command(brief='Create challenge', description='Через пробел указать противника')
-async def s(ctx, arg=None):
+async def vs(ctx, arg=None):
     print(f'DBG_ [INFO] !VS arg = {str(arg)}')
     if arg == None: return
     # name_server = ctx.guild.name
