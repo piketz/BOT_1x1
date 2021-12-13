@@ -34,8 +34,7 @@ def bd_backup(status=None):
 
     now = datetime.datetime.now()
     if status == None: status = '';
-    bkp_name = 'backup_' + str(status) + ' ' + str(now.year) + '.' + str(now.month) + '.' + str(now.day) + ' ' + str(
-        now.hour) + '_' + str(now.minute) + '_' + str(now.second) + '.db'
+    bkp_name = 'backup_' + str(status) + ' ' + str(now.year) + '.' + str(now.month) + '.' + str(now.day) + ' ' + str(now.hour) + '_' + str(now.minute) + '_' + str(now.second) + '.db'
     con = sqlite3.connect('bd.db')
     bck = sqlite3.connect(bkp_name)
     with bck:
@@ -71,8 +70,7 @@ class bot_loop(commands.Cog):
         # 2021-12-01 00:00:00.0000
         #  lastgame_time = datetime.datetime(2021, 12, 4, 0, 0) #Здесь надо подставить дату старта последней игры из запроса выше
         # next7days = lastgame_time + datetime.timedelta(days=days_create_match) #Добавить N дней к ней
-        channel_dbg = await bot.fetch_channel(
-            '916723980113682452')  # impulse_test channel 916723980113682452 #dbg 912553521629495336
+        channel_dbg = await bot.fetch_channel('916723980113682452')  # impulse_test channel 916723980113682452 #dbg 912553521629495336
         # print('lastgame_time = '+str(lastgame_time))
         #  await channel_dbg.send('прошло минут: '+str(self.index)+' timestamp: '+str(timestamp))
         # print('now ----  lastgame_time '+str(now.day)+'.'+str(now.month)+'.'+str(now.year)+'  ----  '+str(lastgame_time.day)+'.'+str(lastgame_time.month)+'.'+str(lastgame_time.year))
@@ -98,8 +96,7 @@ class bot_loop(commands.Cog):
         # print(f'DBG_ 🚩 [INFO] список матчей которые не подтверждены= {a}')
 
         if now >= lastgame_time:
-            print('now >= lastgame_time  ok ' + str(now.day) + '.' + str(now.month) + '.' + str(now.year) + ' > ' + str(
-                lastgame_time.day) + '.' + str(lastgame_time.month) + '.' + str(lastgame_time.year))
+            print('now >= lastgame_time  ok ' + str(now.day) + '.' + str(now.month) + '.' + str(now.year) + ' > ' + str(lastgame_time.day) + '.' + str(lastgame_time.month) + '.' + str(lastgame_time.year))
             chk2_ok = cur.execute('SELECT id FROM match where check_ok=1 ')
 
             # отметить все матчи завершеными.
@@ -112,12 +109,10 @@ class bot_loop(commands.Cog):
             pari = create_new_matchs()
             for i in pari:
                 if dbg_info_in_console == 'yes': print(f'msg {i[0]} против {i[1]}')
-                message = await channel_dbg.send(
-                    '<@' + i[0] + '> vs <@' + i[1] + '>')  # отправляем и получаем ИД сообщения о матче
+                message = await channel_dbg.send('<@' + i[0] + '> vs <@' + i[1] + '>')  # отправляем и получаем ИД сообщения о матче
                 if dbg_info_in_console == 'yes': print('DBG_ создан матч ' + str(message.id))
                 # cur.execute('INSERT INTO {} VALUES(?, ?, ?, ?, ?, ?, ?, ?)'.format(bd_match),(message.id,i[0],i[1],0,0,0,0,0)).fetchone()
-                cur.execute('INSERT INTO {} (id,user_1,user_2) VALUES(?, ?, ?)'.format(bd_match),
-                            (message.id, i[0], i[1])).fetchone()
+                cur.execute('INSERT INTO {} (id,user_1,user_2) VALUES(?, ?, ?)'.format(bd_match),(message.id, i[0], i[1])).fetchone()
                 base.commit()
             # создать запись о датах начала и конца недели
             cur.execute('INSERT INTO weekend (date_start,date_end,player_play,player_not_play) VALUES (?,?,?,?)',
@@ -148,9 +143,7 @@ async def reg(ctx, info=None):  # регистрация игрока можно
     registred = cur.execute('SELECT * FROM {} WHERE user_id == ?'.format(bd_user), (user_id,)).fetchone()
     if registred == None:
         # cur.execute('INSERT INTO {} VALUES(?, ?, ?, ?, ?, ?, ?)'.format(bd_user),(user_id,ctx.author.name,info,name_server,0,0,100)).fetchone()
-        cur.execute(
-            'INSERT  INTO {}(user_id,name,info,server,elo,date_reg) VALUES(?, ?, ?, ?, ?, ?, ?)'.format(bd_user),
-            (user_id, ctx.author.name, info, name_server, start_elo, now)).fetchone()
+        cur.execute('INSERT  INTO {}(user_id,name,info,server,elo,date_reg) VALUES(?, ?, ?, ?, ?, ?, ?)'.format(bd_user),(user_id, ctx.author.name, info, name_server, start_elo, now)).fetchone()
         base.commit()
         await ctx.send('зареган ' + ctx.author.name)
     else:
@@ -183,8 +176,7 @@ async def on_raw_reaction_add(payload):  # чекает новые реакци�
     #  id           user1       user2       check_1     check_2     win1        win2        match_end
     #  id_match[0]  id_match[1] id_match[2] id_match[3] id_match[4] id_match[5] id_match[6] id_match[7]
 
-    if not id_match == None and str(check_emoji) == '👍' and not str(id_match[
-                                                                         7]) == '1':  # чекает реакции на сообщения о матче 1х1 проверяя по ИД сообщения и в базе по ИД матча.
+    if not id_match == None and str(check_emoji) == '👍' and not str(id_match[7]) == '1':  # чекает реакции на сообщения о матче 1х1 проверяя по ИД сообщения и в базе по ИД матча.
 
         # ставит пометку в базу о готовности
         if int(id_match[1]) == user_id and str(check_emoji) == '👍':
@@ -214,10 +206,8 @@ async def on_raw_reaction_add(payload):  # чекает новые реакци�
                 if str(id_match[6]) == 'los':  # win2 los
                     name2 = cur.execute('SELECT user_2 FROM {} WHERE id == ?'.format(bd_match), (id_mess,)).fetchone()
                     await channel.send('<@' + str(user_id) + '> победил <@' + str(name2[0]) + '>')
-                    cur.execute('Update {} set win1 = ?, match_end = ?  WHERE id == ?'.format(bd_match),
-                                ('win', '1', id_mess,)).fetchone()
-                    cur.execute('Update {} set win = win + ? WHERE user_id = ?'.format(bd_user),
-                                ('1', str(user_id))).fetchone()
+                    cur.execute('Update {} set win1 = ?, match_end = ?  WHERE id == ?'.format(bd_match),('win', '1', id_mess,)).fetchone()
+                    cur.execute('Update {} set win = win + ? WHERE user_id = ?'.format(bd_user),('1', str(user_id))).fetchone()
                     base.commit()
                     await message.add_reaction('🤝')  # 🤝 поставить реакцию на матч
                     end_match_elo(str(user_id), str(name2[0]), id_mess)
@@ -270,10 +260,8 @@ async def on_raw_reaction_add(payload):  # чекает новые реакци�
                 if str(id_match[6]) == 'win':
                     name2 = cur.execute('SELECT user_2 FROM {} WHERE id == ?'.format(bd_match), (id_mess,)).fetchone()
                     await channel.send('<@' + str(user_id) + '> проиграл <@' + str(name2[0]) + '>')
-                    cur.execute('Update {} set win1 = ?, match_end = ? WHERE id == ?'.format(bd_match),
-                                ('los', '1', id_mess,)).fetchone()
-                    cur.execute('Update {} set los = los + ? WHERE user_id = ?'.format(bd_user),
-                                ('1', str(user_id))).fetchone()
+                    cur.execute('Update {} set win1 = ?, match_end = ? WHERE id == ?'.format(bd_match),('los', '1', id_mess,)).fetchone()
+                    cur.execute('Update {} set los = los + ? WHERE user_id = ?'.format(bd_user),('1', str(user_id))).fetchone()
                     base.commit()
                     end_match_elo(str(name2[0]), str(user_id), id_mess)
                     await message.add_reaction('🤝')
@@ -281,8 +269,7 @@ async def on_raw_reaction_add(payload):  # чекает новые реакци�
                     if dbg_info_in_console == 'yes': print(str(name2[0]), str(user_id))
                 else:
                     cur.execute('Update {} set win1 = ? WHERE id == ?'.format(bd_match), ('los', id_mess,)).fetchone()
-                    cur.execute('Update {} set los = los + ? WHERE user_id = ?'.format(bd_user),
-                                ('1', str(user_id))).fetchone()
+                    cur.execute('Update {} set los = los + ? WHERE user_id = ?'.format(bd_user),('1', str(user_id))).fetchone()
                     base.commit()
 
         if int(id_match[2]) == user_id:  # второй игрок 🚫
@@ -298,18 +285,15 @@ async def on_raw_reaction_add(payload):  # чекает новые реакци�
                 if str(id_match[5]) == 'win':
                     name1 = cur.execute('SELECT user_1 FROM {} WHERE id == ?'.format(bd_match), (id_mess,)).fetchone()
                     await channel.send('<@' + str(user_id) + '> проиграл <@' + str(name1[0]) + '>')
-                    cur.execute('Update {} set win2 = ?, match_end = ? WHERE id == ?'.format(bd_match),
-                                ('los', '1', id_mess,)).fetchone()
-                    cur.execute('Update {} set los = los + ? WHERE user_id = ?'.format(bd_user),
-                                ('1', str(user_id))).fetchone()
+                    cur.execute('Update {} set win2 = ?, match_end = ? WHERE id == ?'.format(bd_match),('los', '1', id_mess,)).fetchone()
+                    cur.execute('Update {} set los = los + ? WHERE user_id = ?'.format(bd_user),('1', str(user_id))).fetchone()
                     base.commit()
                     end_match_elo(str(name1[0]), str(user_id), id_mess)
                     if dbg_info_in_console == 'yes': print('DBG_ 🚩 первый второй 🚫 ')
                     await message.add_reaction('🤝')
                 else:
                     cur.execute('Update {} set win2 = ? WHERE id == ?'.format(bd_match), ('los', id_mess,)).fetchone()
-                    cur.execute('Update {} set los = los + ? WHERE user_id = ?'.format(bd_user),
-                                ('1', str(user_id))).fetchone()
+                    cur.execute('Update {} set los = los + ? WHERE user_id = ?'.format(bd_user),('1', str(user_id))).fetchone()
                     base.commit()
 
     # завершить матч если оба поставили ✅ и 🚫
@@ -364,8 +348,7 @@ async def t2(ctx):
         message = await ctx.send('<@' + i[0] + '> vs <@' + i[1] + '>')  # отправляем и получаем ИД сообщения о матче
         if dbg_info_in_console == 'yes': print('DBG_ создан матч ' + str(message.id))
         # cur.execute('INSERT INTO {} VALUES(?, ?, ?, ?, ?, ?, ?, ?)'.format(bd_match),(message.id,i[0],i[1],0,0,0,0,0)).fetchone()
-        cur.execute('INSERT INTO {} (id,user_1,user_2) VALUES(?, ?, ?)'.format(bd_match),
-                    (message.id, i[0], i[1])).fetchone()
+        cur.execute('INSERT INTO {} (id,user_1,user_2) VALUES(?, ?, ?)'.format(bd_match),(message.id, i[0], i[1])).fetchone()
         base.commit()
 
 
