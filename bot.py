@@ -113,7 +113,7 @@ class bot_loop(commands.Cog):
                 cur.execute('INSERT INTO {} (id,user_1,user_2) VALUES(?, ?, ?)'.format(bd_match),(message.id, i[0], i[1])).fetchone()
                 base.commit()
             pari[1] = str(pari[1])
-            await ctx.send('<@' + str(pari[1][2:-2]) + '> остался без соперника')  # один остался без пары
+            await channel_dbg.send('<@' + str(pari[1][2:-2]) + '> остался без соперника')  # один остался без пары
             # создать запись о датах начала и конца недели
             cur.execute('INSERT INTO weekend (date_start,date_end,player_play,player_not_play) VALUES (?,?,?,?)',(str(now), str(endmatchtime), 0, 0)).fetchone()
             base.commit()
