@@ -41,6 +41,7 @@ def bd_backup(status=None):
         con.backup(bck, pages=1, progress=progress)
     bck.close()
     con.close()
+    os.makedirs("DB_backup/", exist_ok=True)
     os.replace(bkp_name, "DB_backup/" + bkp_name)
     print(f'bkp_ok')
 
