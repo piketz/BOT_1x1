@@ -67,8 +67,8 @@ class bot_loop(commands.Cog):
         endmatchtime = endmatchtime2.replace(hour=0, minute=0, second=0, microsecond=0)
 
         lastgame_time_sql = cur.execute('SELECT MAX(date_end) FROM weekend').fetchone()  # запрос из бд по самой последней дате в колонке date_end
-        lastgame_time = datetime.datetime.strptime(lastgame_time_sql[0], "%Y-%m-%d %H:%M:%S.%f")
-                                                                        # 2021-12-01 00:00:00.0000
+        lastgame_time = datetime.datetime.strptime(lastgame_time_sql[0], "%Y-%m-%d %H:%M:%S")
+                                                                        # 2021-12-01 00:00:00.0000.%f
         # next7days = lastgame_time + datetime.timedelta(days=days_create_match) #Добавить N дней к ней
         channel_dbg = await bot.fetch_channel('916723980113682452')  # impulse_test channel 916723980113682452 #dbg 912553521629495336
 
