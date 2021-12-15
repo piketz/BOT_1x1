@@ -9,6 +9,7 @@ from multielo import MultiElo
 bot = commands.Bot(command_prefix='!')
 bd_match = 'match'
 bd_user = 'users'
+bd_log = 'log'
 elo = MultiElo()
 dbg_info_in_channel = 'no'
 dbg_info_in_console = 'yes'
@@ -341,13 +342,6 @@ def create_new_matchs():
 
 
 
-#  for i in pari:
-#      if dbg_info_in_console == 'yes': print(f'msg {i[0]} против {i[1]}')
-#      message = await ctx.send('<@' + i[0] + '> vs <@' + i[1] + '>') #отправляем и получаем ИД сообщения о матче
-#      if dbg_info_in_console == 'yes': print('DBG_ создан матч ' + str(message.id))
-#      cur.execute('INSERT id,user_1,user_2 INTO {} VALUES(?, ?, ?)'.format(bd_match),(message.id,i[0],i[1])).fetchone()
-#      base.commit()
-
 @bot.command(brief='Тестовая команда для создания матчей')
 async def t2(ctx):
     pari = create_new_matchs()
@@ -385,6 +379,28 @@ async def vs(ctx, arg=None):
     print(f'DBG_ [INFO] VS message.id={message.id} user1_id={user1_id} user2_id={user2_id}')
     print(f'DBG_ [INFO] VS message.id={type(message.id)} user1_id={type(user1_id)} user2_id={type(user2_id)}')
 
+
+@bot.command(brief='Admin tools', description='Через пробел указать админа')
+async def adminreg(ctx, arg=None):
+    print(f'DBG_ [ADMIN] !adminreg arg = {str(arg)}')
+    if arg == None: return
+
+    # name_server = ctx.guild.name
+    user_id = ctx.author.id
+    user_add = (str(arg[3:-1]))
+    admin_chk = cur.execute('SELECT user_id FROM {} WHERE adm == 1 AND user_id == ?'.format(bd_user), (user_id,)).fetchone()
+    # print(f'DBG_ [ADMIN] arg = {str(arg)} admin_chk = {str(admin_chk)} user_id = {str(user_id)}')
+    if admin_chk == None or str(user_id) == user_add: return
+    if user_id == admin_chk[0]:
+        cur.execute('Update {} set adm = 1  WHERE user_id == ?'.format(bd_user),(str(user_add),)).fetchone()
+        base.commit()
+        print(f'DBG_ [ADMIN] !adminreg now admin = {str(rtn_name_on_id(user_add))}')
+        log_in_db(user_id, f'add admin {str(rtn_name_on_id(user_add))}')
+
+def log_in_db(user_id,command):
+    now = datetime.datetime.now()
+    cur.execute('INSERT INTO {} (user,command,date) VALUES(?, ?, ?)'.format(bd_log),(str(rtn_name_on_id(user_id)), str(command), now)).fetchone()
+    base.commit()
 
 def rtn_name_on_id(user_id):
     return (str(cur.execute('SELECT name FROM {} WHERE user_id == ?'.format(bd_user), (user_id,)).fetchone())[2:-3])
