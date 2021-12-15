@@ -138,7 +138,7 @@ async def reg(ctx, info=None):  # регистрация игрока можно
     user_id = ctx.author.id
     now = datetime.datetime.now()
 
-    if ctx.author.id == '<@!406602036671676422>':  # <@!3653003926 50604544>
+    if user_id == '<@!406602036671676422>':  # <@!3653003926 50604544>
         await ctx.send('слава украине!')
 
     registred = cur.execute('SELECT * FROM {} WHERE user_id == ?'.format(bd_user), (user_id,)).fetchone()
@@ -147,6 +147,7 @@ async def reg(ctx, info=None):  # регистрация игрока можно
         cur.execute('INSERT  INTO {}(user_id,name,info,server,elo,date_reg) VALUES(?, ?, ?, ?, ?, ?, ?)'.format(bd_user),(user_id, ctx.author.name, info, name_server, start_elo, now)).fetchone()
         base.commit()
         await ctx.send('зареган ' + ctx.author.name)
+        log_in_db(user_id, f' Registred user {str(rtn_name_on_id(user_id))}', name_server)
     else:
         await ctx.send('уже есть пользователь ' + ctx.author.name)
 
