@@ -382,10 +382,9 @@ async def vs(ctx, arg=None):
 
 @bot.command(brief='Admin tools', description='Через пробел указать админа')
 async def adminreg(ctx, arg=None):
-    print(f'DBG_ [ADMIN] !adminreg arg = {str(arg)}')
+    #print(f'DBG_ [ADMIN] !adminreg arg = {str(arg)}')
     if arg == None: return
-
-    # name_server = ctx.guild.name
+    name_server = ctx.guild.name
     user_id = ctx.author.id
     user_add = (str(arg[3:-1]))
     admin_chk = cur.execute('SELECT user_id FROM {} WHERE adm == 1 AND user_id == ?'.format(bd_user), (user_id,)).fetchone()
@@ -395,11 +394,28 @@ async def adminreg(ctx, arg=None):
         cur.execute('Update {} set adm = 1  WHERE user_id == ?'.format(bd_user),(str(user_add),)).fetchone()
         base.commit()
         print(f'DBG_ [ADMIN] !adminreg now admin = {str(rtn_name_on_id(user_add))}')
-        log_in_db(user_id, f'add admin {str(rtn_name_on_id(user_add))}')
+        log_in_db(user_id, f'[ADM] add admin {str(rtn_name_on_id(user_add))}',name_server)
 
-def log_in_db(user_id,command):
+@bot.command(brief='Admin tools', description='Через пробел указать админа')
+async def admindel(ctx, arg=None):
+    #print(f'DBG_ [ADMIN] !adminreg arg = {str(arg)}')
+    if arg == None: return
+    name_server = ctx.guild.name
+    user_id = ctx.author.id
+    user_add = (str(arg[3:-1]))
+    admin_chk = cur.execute('SELECT user_id FROM {} WHERE adm == 1 AND user_id == ?'.format(bd_user), (user_id,)).fetchone()
+    # print(f'DBG_ [ADMIN] arg = {str(arg)} admin_chk = {str(admin_chk)} user_id = {str(user_id)}')
+    if admin_chk == None or str(user_id) == user_add: return
+    if user_id == admin_chk[0]:
+        cur.execute('Update {} set adm = 0  WHERE user_id == ?'.format(bd_user),(str(user_add),)).fetchone()
+        base.commit()
+        print(f'DBG_ [ADMIN] !admindel now admin = {str(rtn_name_on_id(user_add))}')
+        log_in_db(user_id, f'[ADM] del admin {str(rtn_name_on_id(user_add))}',name_server)
+
+
+def log_in_db(user_id,command,server=None):
     now = datetime.datetime.now()
-    cur.execute('INSERT INTO {} (user,command,date) VALUES(?, ?, ?)'.format(bd_log),(str(rtn_name_on_id(user_id)), str(command), now)).fetchone()
+    cur.execute('INSERT INTO {} (user,command,date,server) VALUES(?, ?, ?, ?)'.format(bd_log),(str(rtn_name_on_id(user_id)), str(command), now, server)).fetchone()
     base.commit()
 
 def rtn_name_on_id(user_id):
