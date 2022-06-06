@@ -3,6 +3,7 @@ import os, sqlite3, itertools
 from discord.ext import tasks, commands
 # from discord.utils import get
 from multielo import MultiElo
+from pathlib import Path
 # import numpy as np
 # import threading
 # import sched, discord, time, string, json
@@ -16,10 +17,12 @@ dbg_info_in_channel = 'no'
 dbg_info_in_console = 'yes'
 days_create_match = 1
 start_elo = 100
-bot_key_api_file = open('botkey.txt')
+
 id_channel = '912553521629495336' # impulse_test channel 916723980113682452 #dbg 912553521629495336
 
-
+fle = Path('botkey.txt')
+fle.touch(exist_ok=True)
+bot_key_api_file = open(fle)
 
 @bot.event
 async def on_ready():
