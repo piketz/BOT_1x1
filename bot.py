@@ -17,7 +17,6 @@ dbg_info_in_channel = 'no'
 dbg_info_in_console = 'yes'
 days_create_match = 1
 start_elo = 100
-
 id_channel = '912553521629495336' # impulse_test channel 916723980113682452 #dbg 912553521629495336
 
 fle = Path('botkey.txt')
