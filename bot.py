@@ -17,9 +17,9 @@ dbg_info_in_console = 'yes'
 days_create_match = 1
 start_elo = 100
 bot_key_api_file = open('botkey.txt')
+id_channel = '912553521629495336' # impulse_test channel 916723980113682452 #dbg 912553521629495336
 
 
-channel_dbg = await bot.fetch_channel('912553521629495336')  # impulse_test channel 916723980113682452 #dbg 912553521629495336
 
 @bot.event
 async def on_ready():
@@ -68,6 +68,7 @@ class bot_loop(commands.Cog):
     ####
     @tasks.loop(minutes=1.0)  # выполняется каждую минуту
     async def bmain(self):
+        channel_dbg = await bot.fetch_channel(id_channel)
         now = datetime.datetime.now()
         endmatchtime2 = now + datetime.timedelta(days=days_create_match)
         endmatchtime = endmatchtime2.replace(hour=0, minute=0, second=0, microsecond=0)
