@@ -19,6 +19,8 @@ start_elo = 100
 bot_key_api_file = open('botkey.txt')
 
 
+channel_dbg = await bot.fetch_channel('912553521629495336')  # impulse_test channel 916723980113682452 #dbg 912553521629495336
+
 @bot.event
 async def on_ready():
     print('Старт бота')
@@ -52,10 +54,10 @@ def bd_backup(status=None):
 class bot_loop(commands.Cog):
     def __init__(self):
         self.index = 0
-        self.printer.start()
+        self.bmain.start()
 
     def cog_unload(self):
-        self.printer.cancel()
+        self.bmain.cancel()
 
     #####
     @tasks.loop(hours=12.0)
@@ -65,7 +67,7 @@ class bot_loop(commands.Cog):
 
     ####
     @tasks.loop(minutes=1.0)  # выполняется каждую минуту
-    async def printer(self):
+    async def bmain(self):
         now = datetime.datetime.now()
         endmatchtime2 = now + datetime.timedelta(days=days_create_match)
         endmatchtime = endmatchtime2.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -74,7 +76,7 @@ class bot_loop(commands.Cog):
         lastgame_time = datetime.datetime.strptime(lastgame_time_sql[0], "%Y-%m-%d %H:%M:%S")
                                                                         # 2021-12-01 00:00:00.0000  %Y-%m-%d %H:%M:%S.%f
         # next7days = lastgame_time + datetime.timedelta(days=days_create_match) #Добавить N дней к ней
-        channel_dbg = await bot.fetch_channel('916723980113682452')  # impulse_test channel 916723980113682452 #dbg 912553521629495336
+
 
         # print('now ----  lastgame_time '+str(now.day)+'.'+str(now.month)+'.'+str(now.year)+'  ----  '+str(lastgame_time.day)+'.'+str(lastgame_time.month)+'.'+str(lastgame_time.year))
         #  print('endmatchtime = '+str(endmatchtime))
