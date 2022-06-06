@@ -16,6 +16,7 @@ dbg_info_in_channel = 'no'
 dbg_info_in_console = 'yes'
 days_create_match = 1
 start_elo = 100
+bot_key_api_file = open('botkey.txt')
 
 
 @bot.event
@@ -105,7 +106,7 @@ class bot_loop(commands.Cog):
             base.commit()
 
             await channel_dbg.send('Время вышло. Все матчи завершены')
-            bd_backup()
+
             # создать новые матчи
             pari = create_new_matchs()
             for i in pari[0]:
@@ -302,6 +303,7 @@ async def on_raw_reaction_add(payload):  # чекает новые реакци�
 
 
 def create_new_matchs():
+    global non_in_game_id
     a = []  # лист          Список игроков ID
     s = {}  # словарь       рейтинг игроков c ID
     name = {}  # словарь    Имя игроков
@@ -510,12 +512,4 @@ async def tst_list(ctx):
     await ctx.send(a)
 
 
-#  embed = discord.Embed(
-#     description = f'You drew: {first_random_item}\nand\n{second_random_item}',
-#     colour = discord.Colour.from_rgb(47,128,49)
-#      )
-# embed.set_footer(text="Bot of Greed", icon_url="link")
-# await ctx.send(embed=embed)
-
-
-bot.run('OTEyNTUzODAwNzU2MjQ0NTAw.YZxn9A.cGoeXkIovgzT38Xfs2yKU1JkSHM')
+bot.run(bot_key_api_file.read())
