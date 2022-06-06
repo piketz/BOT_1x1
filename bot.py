@@ -1,4 +1,5 @@
-import datetime, os, sqlite3, itertools
+import datetime
+import os, sqlite3, itertools
 from discord.ext import tasks, commands
 # from discord.utils import get
 from multielo import MultiElo
