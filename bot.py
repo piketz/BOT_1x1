@@ -139,8 +139,6 @@ async def reg(ctx, info=None):  # регистрация игрока можно
     user_id = ctx.author.id
     now = datetime.datetime.now()
 
-
-
     registred = cur.execute('SELECT * FROM {} WHERE user_id == ?'.format(bd_user), (user_id,)).fetchone()
     if registred == None:
         # cur.execute('INSERT INTO {} VALUES(?, ?, ?, ?, ?, ?, ?)'.format(bd_user),(user_id,ctx.author.name,info,name_server,0,0,100)).fetchone()
