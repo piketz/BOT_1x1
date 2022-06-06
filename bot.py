@@ -139,8 +139,7 @@ async def reg(ctx, info=None):  # регистрация игрока можно
     user_id = ctx.author.id
     now = datetime.datetime.now()
 
-    if user_id == '<@!406602036671676422>':  # <@!3653003926 50604544>
-        await ctx.send('слава украине!')
+
 
     registred = cur.execute('SELECT * FROM {} WHERE user_id == ?'.format(bd_user), (user_id,)).fetchone()
     if registred == None:
