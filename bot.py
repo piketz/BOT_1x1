@@ -1,12 +1,10 @@
 import datetime
-import os, sqlite3, itertools
+import os
+import sqlite3
+import itertools
 from discord.ext import tasks, commands
-# from discord.utils import get
 from multielo import MultiElo
 from pathlib import Path
-# import numpy as np
-# import threading
-# import sched, discord, time, string, json
 
 bot = commands.Bot(command_prefix='!')
 bd_match = 'match'
@@ -75,14 +73,9 @@ class bot_loop(commands.Cog):
         endmatchtime2 = now + datetime.timedelta(days=days_create_match)
         endmatchtime = endmatchtime2.replace(hour=0, minute=0, second=0, microsecond=0)
 
-        lastgame_time_sql = cur.execute('SELECT MAX(date_end) FROM weekend').fetchone()  # запрос из бд по самой последней дате в колонке date_end
-        lastgame_time = datetime.datetime.strptime(lastgame_time_sql[0], "%Y-%m-%d %H:%M:%S")
-                                                                        # 2021-12-01 00:00:00.0000  %Y-%m-%d %H:%M:%S.%f
-        # next7days = lastgame_time + datetime.timedelta(days=days_create_match) #Добавить N дней к ней
-
-
+        lastgame_create_time_sql = cur.execute('SELECT MAX(date_end) FROM weekend').fetchone()  # запрос из бд по самой последней дате в колонке date_end
+        lastgame_create = datetime.datetime.strptime(lastgame_create_time_sql[0], "%Y-%m-%d %H:%M:%S")
         # print('now ----  lastgame_time '+str(now.day)+'.'+str(now.month)+'.'+str(now.year)+'  ----  '+str(lastgame_time.day)+'.'+str(lastgame_time.month)+'.'+str(lastgame_time.year))
-        #  print('endmatchtime = '+str(endmatchtime))
         chk_ok = cur.execute('SELECT id FROM match where match_end=0 and check_1=1 and check_2=1 and check_ok=0')
         a = []  # лист ID матчей
         for user in chk_ok: a.append(str(user[0]))  # создать список матчей с подтврежденными играми
@@ -90,30 +83,16 @@ class bot_loop(commands.Cog):
             # print(f'DBG_ 🚩 [INFO] i = {i} type = {type(i)}')
             cur.execute(f'UPDATE match SET check_ok = 1 WHERE id = {i}')
             base.commit()
-        lastgame_time_int = lastgame_time - datetime.timedelta(hours=12)
 
-        # print(f'DBG_ 🚩 [INFO] list a= {a}')
-        # print(type(chk_ok))
-
-        # print(f'DBG_ 🚩 [INFO] lastgame_time :  = {lastgame_time} lastgame_time-12 = {lastgame_time_int}')
-
-        # if now >= lastgame_time_int:# and chk_ok[1] == '0':
-        # print(f'DBG_ 🚩 [INFO] осталось 12 часов до конца. : lastgame_time-12 = {lastgame_time_int}')
-        # await channel_dbg.send('Не подтвержденные матчи переназначаются')
-        # print(f'DBG_ 🚩 [INFO] список матчей которые не подтверждены= {a}')
-
-        if now >= lastgame_time:
-            print('now >= lastgame_time  ok ' + str(now.day) + '.' + str(now.month) + '.' + str(now.year) + ' > ' + str(lastgame_time.day) + '.' + str(lastgame_time.month) + '.' + str(lastgame_time.year))
+        if now >= lastgame_create:
+            print(f'now >= lastgame_time ok {str(now.day)}.{str(now.month)}.{str(now.year)} > {str(lastgame_time.day)}.{str(lastgame_time.month)}.{str(lastgame_time.year)}')
             chk2_ok = cur.execute('SELECT id FROM match where check_ok=1 ')
 
-            # отметить все матчи завершеными.
-            cur.execute('UPDATE match SET match_end = 1 WHERE check_ok=0 and match_end = 0'.format(bd_match)).fetchone()
+            cur.execute('UPDATE match SET match_end = 1 WHERE check_ok=0 and match_end = 0'.format(bd_match)).fetchone() # отметить все матчи завершеными.
             base.commit()
-
             await channel_dbg.send('Время вышло. Все матчи завершены')
 
-            # создать новые матчи
-            pari = create_new_matchs()
+            pari = create_new_matchs()  # создать новые матчи
             for i in pari[0]:
                 if dbg_info_in_console == 'yes': print(f'msg {i[0]} против {i[1]}')
                 message = await channel_dbg.send('<@' + i[0] + '> vs <@' + i[1] + '>')  # отправляем и получаем ИД сообщения о матче
@@ -124,7 +103,8 @@ class bot_loop(commands.Cog):
             pari[1] = str(pari[1])
             await channel_dbg.send('<@' + str(pari[1][2:-2]) + '> остался без соперника')  # один остался без пары
             # создать запись о датах начала и конца недели
-            cur.execute('INSERT INTO weekend (date_start,date_end,player_play,player_not_play) VALUES (?,?,?,?)',(str(now), str(endmatchtime), 0, 0)).fetchone()
+            cur.execute('INSERT INTO weekend (date_start,date_end,player_play,player_not_play)'
+                        ' VALUES (?,?,?,?)',(str(now), str(endmatchtime), 0, 0)).fetchone()
             base.commit()
             bd_backup()
 
@@ -309,9 +289,9 @@ async def on_raw_reaction_add(payload):  # чекает новые реакци�
 
 def create_new_matchs():
     global non_in_game_id
-    a = []  # лист          Список игроков ID
-    s = {}  # словарь       рейтинг игроков c ID
-    name = {}  # словарь    Имя игроков
+    a = []  # Список игроков ID
+    s = {}  # рейтинг игроков c ID
+    name = {}
     users = cur.execute('SELECT user_id,elo,name FROM {} '.format(bd_user), )
 
     for user in users:
@@ -341,8 +321,6 @@ def create_new_matchs():
     if dbg_info_in_console == 'yes':
         print(f' Пары для игры \n{pari_n}')
         print(f' Этот ID не играет сегодня {set(a) - set(filter)}, его имя {name[list(set(a) - set(filter))[0]]}')
-     #   non_in_game_id = []
-     #   non_in_game_id.append(set(a) - set(filter))
         non_in_game_id = set(a) - set(filter)
     return [pari,non_in_game_id]
 
@@ -356,11 +334,9 @@ async def t2(ctx):
         if dbg_info_in_console == 'yes': print(f'msg {i[0]} против {i[1]}')
         message = await ctx.send('<@' + i[0] + '> vs <@' + i[1] + '>')  # отправляем и получаем ИД сообщения о матче
         if dbg_info_in_console == 'yes': print('DBG_ создан матч ' + str(message.id))
-        # cur.execute('INSERT INTO {} VALUES(?, ?, ?, ?, ?, ?, ?, ?)'.format(bd_match),(message.id,i[0],i[1],0,0,0,0,0)).fetchone()
         cur.execute('INSERT INTO {} (id,user_1,user_2) VALUES(?, ?, ?)'.format(bd_match),(message.id, i[0], i[1])).fetchone()
         base.commit()
     pari[1] = str(pari[1])
-   # print(f' DBG t2 str(pari[1][3:-2]) = {str(pari[1][2:-2])} type = {type(pari[1])}')
     await ctx.send('<@' + str(pari[1][2:-2]) + '> остался без соперника')  # один остался без пары
 
 @bot.command(brief='Create challenge', description='Через пробел указать противника')
@@ -375,7 +351,6 @@ async def vs(ctx, arg=None):
     if user2_chk == None or str(user1_id) == user2_id: return
 
     challenge = rtn_name_on_id(user1_id)
-    # print(f' arg = {str(arg)} user2_id = {str(user2_id)}')
 
     if dbg_info_in_console == 'yes': print(f'msg {rtn_name_on_id(user1_id)} против {rtn_name_on_id(user2_id)}')
     message = await ctx.send('<@' + str(user1_id) + '> vs <@' + str(user2_id) + '>')  # отправляем и получаем ИД сообщения о матче
@@ -388,13 +363,11 @@ async def vs(ctx, arg=None):
 
 @bot.command(brief='Admin tools', description='Через пробел указать админа')
 async def adminreg(ctx, arg=None):
-    #print(f'DBG_ [ADMIN] !adminreg arg = {str(arg)}')
     if arg == None: return
     name_server = ctx.guild.name
     user_id = ctx.author.id
     user_add = (str(arg[3:-1]))
     admin_chk = cur.execute('SELECT user_id FROM {} WHERE adm == 1 AND user_id == ?'.format(bd_user), (user_id,)).fetchone()
-    # print(f'DBG_ [ADMIN] arg = {str(arg)} admin_chk = {str(admin_chk)} user_id = {str(user_id)}')
     if admin_chk == None or str(user_id) == user_add: return
     if user_id == admin_chk[0]:
         cur.execute('Update {} set adm = 1  WHERE user_id == ?'.format(bd_user),(str(user_add),)).fetchone()
@@ -404,13 +377,11 @@ async def adminreg(ctx, arg=None):
 
 @bot.command(brief='Admin tools', description='Через пробел указать админа')
 async def admindel(ctx, arg=None):
-    #print(f'DBG_ [ADMIN] !adminreg arg = {str(arg)}')
     if arg == None: return
     name_server = ctx.guild.name
     user_id = ctx.author.id
     user_add = (str(arg[3:-1]))
     admin_chk = cur.execute('SELECT user_id FROM {} WHERE adm == 1 AND user_id == ?'.format(bd_user), (user_id,)).fetchone()
-    # print(f'DBG_ [ADMIN] arg = {str(arg)} admin_chk = {str(admin_chk)} user_id = {str(user_id)}')
     if admin_chk == None or str(user_id) == user_add: return
     if user_id == admin_chk[0]:
         cur.execute('Update {} set adm = 0  WHERE user_id == ?'.format(bd_user),(str(user_add),)).fetchone()
@@ -436,19 +407,13 @@ def end_match_elo(win_user_id, los_user_id, id_mess):
     if user1[6] == None or user2[6] == None:
         print(f'DBG_ 🚩 [ERROR]  ELO None:  user1= {str(user1[6])} user2= {str(user2[6])}')
         return
-    print(
-        f'DBG_ 🚩 [INFO] end_match_elo : win_user_id={str(win_user_id)} {type(win_user_id)} los_user_id={str(los_user_id)} {type(los_user_id)} id_mess={str(id_mess)} {type(id_mess)}')
-
-    # result = [int(user1[6]), int(user2[6])]
     if dbg_info_in_console == 'yes': print('DBG_ 🚩 fnk elo == ' + str(win_user_id) + ' los = ' + str(los_user_id))
-
     if win_user_id == name_users[0]:  # если победительИД равен юзеру1
         if dbg_info_in_console == 'yes': print('DBG_ 🚩 1 win_user_id == ' + str(name_users[0]))
         result = elo.get_new_ratings([int(user1[6]), int(user2[6])])
         cur.execute('Update {} set elo = ?  WHERE user_id == ?'.format(bd_user),(int(result[0]), str(user1[0]),)).fetchone()
         cur.execute('Update {} set elo = ?  WHERE user_id == ?'.format(bd_user),(int(result[1]), str(user2[0]),)).fetchone()
         base.commit()
-
     if win_user_id == name_users[1]:  # если победительИД равен юзеру2
         if dbg_info_in_console == 'yes': print('DBG_ 🚩 2 win_user_id == ' + str(name_users[1]))
         result = elo.get_new_ratings([int(user2[6]), int(user1[6])])
