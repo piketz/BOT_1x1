@@ -93,7 +93,8 @@ class bot_loop(commands.Cog):
 
             pari = create_new_matchs()  # создать новые матчи
             for i in pari[0]:
-                if dbg_info_in_console == 'yes': log_in_db('admin', f'[MSG] {i[0]} против {i[1]}')
+                print(f'[MSG] {return_name_on_id(i[0])} против {return_name_on_id(i[1])}')
+                if dbg_info_in_console == 'yes': log_in_db('admin', f'[MSG] {return_name_on_id(i[0])} против {return_name_on_id(i[1])}')
                 message = await channel.send('<@' + i[0] + '> vs <@' + i[1] + '>')  # отправляем и получаем ИД сообщения о матче
                 if dbg_info_in_console == 'yes':  log_in_db('admin', f'[DBG] создан матч  {str(message.id)}')
                 # cur.execute('INSERT INTO {} VALUES(?, ?, ?, ?, ?, ?, ?, ?)'.format(bd_match),(message.id,i[0],i[1],0,0,0,0,0)).fetchone()
@@ -108,7 +109,7 @@ class bot_loop(commands.Cog):
             bd_backup()
 
 
-# def hello_world(): # для создания второго потока и отсчета времени. работает но закрыть бот нужно только через диспетчер задач
+# def hello_world(): # для создания второго потока и отсчета времени. работает но закрыть бот нужно через диспетчер задач
 #  while True:
 #     print("Hello, World!")
 #     time.sleep(6)
@@ -128,7 +129,7 @@ async def reg(ctx, info=None):
         cur.execute('INSERT  INTO {}(user_id,name,info,server,elo,date_reg) VALUES(?, ?, ?, ?, ?, ?, ?)'.format(bd_user),(user_id, ctx.author.name, info, name_server, start_elo, now)).fetchone()
         base.commit()
         await ctx.send('зареган ' + ctx.author.name)
-        log_in_db(user_id, f' Registred user {str(rtn_name_on_id(user_id))}', name_server)
+        log_in_db(user_id, f' Registred user {str(return_name_on_id(user_id))}', name_server)
     else:
         await ctx.send('уже есть пользователь ' + ctx.author.name)
 
@@ -275,17 +276,17 @@ async def on_raw_reaction_add(payload):  # чекает новые реакци�
 
 def create_new_matchs():
     global non_in_game_id
-    a = []  # Список игроков ID
-    s = {}  # рейтинг игроков c ID
+    user_list = []  # Список игроков ID
+    user_elo_id = {}  # рейтинг игроков c ID
     name = {}
     users = cur.execute('SELECT user_id,elo,name FROM {} '.format(bd_user), )
 
     for user in users:
-        a.append(str(user[0]))
-        s[str(user[0])] = user[1]
+        user_list.append(str(user[0]))
+        user_elo_id[str(user[0])] = user[1]
         name[str(user[0])] = user[2]
 
-    raunds = {i: abs(s[i[0]] - s[i[1]]) for i in itertools.combinations(a, 2)} #Все комбинации для игры с разницей рейтинга
+    raunds = {i: abs(user_elo_id[i[0]] - user_elo_id[i[1]]) for i in itertools.combinations(user_list, 2)} #Все комбинации для игры с разницей рейтинга
     sorted_tuple = sorted(raunds.items(), key=lambda x: x[1]) #Отсортированно по разнице рейтинга
     filter = []
     pari = []
@@ -300,8 +301,8 @@ def create_new_matchs():
 
     if dbg_info_in_console == 'yes':
         print(f' Пары для игры \n{pari_n}')
-        print(f' Этот ID не играет сегодня {set(a) - set(filter)}, его имя {name[list(set(a) - set(filter))[0]]}')
-        non_in_game_id = set(a) - set(filter)
+        print(f' Этот ID не играет сегодня {set(user_list) - set(filter)}, его имя {name[list(set(user_list) - set(filter))[0]]}')
+        non_in_game_id = set(user_list) - set(filter)
     return [pari,non_in_game_id]
 
 
@@ -330,9 +331,9 @@ async def vs(ctx, arg=None):
     user2_chk = cur.execute('SELECT user_id FROM {} WHERE user_id == ?'.format(bd_user), (user2_id,)).fetchone()
     if user2_chk == None or str(user1_id) == user2_id: return
 
-    challenge = rtn_name_on_id(user1_id)
+    challenge = return_name_on_id(user1_id)
 
-    if dbg_info_in_console == 'yes': log_in_db(ctx.author.id, f'msg {rtn_name_on_id(user1_id)} против {rtn_name_on_id(user2_id)}', ctx.guild.name)
+    if dbg_info_in_console == 'yes': log_in_db(ctx.author.id, f'msg {return_name_on_id(user1_id)} против {return_name_on_id(user2_id)}', ctx.guild.name)
     message = await ctx.send('<@' + str(user1_id) + '> vs <@' + str(user2_id) + '>')  # отправляем и получаем ИД сообщения о матче
     if dbg_info_in_console == 'yes': log_in_db(ctx.author.id, f'[INFO] VS создан матч {str(message.id)}', ctx.guild.name)
     cur.execute('INSERT INTO {} (id,user_1,user_2,challenge) VALUES(?, ?, ?, ?)'.format(bd_match),(message.id, str(user1_id), user2_id, challenge)).fetchone()
@@ -351,7 +352,7 @@ async def adminreg(ctx, arg=None):
     if user_id == admin_chk[0]:
         cur.execute('Update {} set adm = 1  WHERE user_id == ?'.format(bd_user),(str(user_add),)).fetchone()
         base.commit()
-        log_in_db(user_id, f'[ADM] add admin {str(rtn_name_on_id(user_add))}',name_server)
+        log_in_db(user_id, f'[ADM] add admin {str(return_name_on_id(user_add))}', name_server)
 
 @bot.command(brief='Admin tools', description='Через пробел указать админа')
 async def admindel(ctx, arg=None):
@@ -364,20 +365,20 @@ async def admindel(ctx, arg=None):
     if user_id == admin_chk[0]:
         cur.execute('Update {} set adm = 0  WHERE user_id == ?'.format(bd_user), (str(user_add),)).fetchone()
         base.commit()
-        print(f'DBG_ [ADMIN] !admindel now admin = {str(rtn_name_on_id(user_add))}')
-        log_in_db(user_id, f'[ADM] del admin {str(rtn_name_on_id(user_add))}', name_server)
+        print(f'DBG_ [ADMIN] !admindel now admin = {str(return_name_on_id(user_add))}')
+        log_in_db(user_id, f'[ADM] del admin {str(return_name_on_id(user_add))}', name_server)
 
 def log_in_db(user_id='admin',command=None,server=None):
     time_now = datetime.datetime.now()
+    user_id = user_id.replace('_', '') #небольшая защита от иньекций из имени пользователя
     if type(user_id) == int:
-        user_name = str(rtn_name_on_id(user_id))
+        user_name = str(return_name_on_id(user_id))
     else:
         user_name = str(user_id)
-    cur.execute('INSERT INTO {} (user,command,date,server) VALUES(?, ?, ?, ?)'.format(bd_log),user_name,
-                str(command), time_now, server).fetchone()
+    cur.execute(f'INSERT INTO {bd_log} (user,command,date,server) VALUES("{user_name}", "{str(command)}", "{str(time_now)}", "{str(server)}")')
     base.commit()
 
-def rtn_name_on_id(user_id):
+def return_name_on_id(user_id):
     return (str(cur.execute('SELECT name FROM {} WHERE user_id == ?'.format(bd_user), (user_id,)).fetchone())[2:-3])
 
 def end_match_elo(win_user_id, los_user_id, id_mess):
@@ -390,21 +391,21 @@ def end_match_elo(win_user_id, los_user_id, id_mess):
         return
     if dbg_info_in_console == 'yes':
         log_in_db('admin', f'[DBG] 🚩 fnk elo == {str(win_user_id)} los = {str(los_user_id)}')
-    if win_user_id == name_users[0]:  # если победительИД равен юзеру1
+    if win_user_id == name_users[0]:  # если победитель_id равен юзеру1
         if dbg_info_in_console == 'yes':
             log_in_db('admin', f'[DBG] 🚩 1 win_user_id == {str(name_users[0])}')
         result = elo.get_new_ratings([int(user1[6]), int(user2[6])])
         cur.execute('Update {} set elo = ?  WHERE user_id == ?'.format(bd_user),(int(result[0]), str(user1[0]),)).fetchone()
         cur.execute('Update {} set elo = ?  WHERE user_id == ?'.format(bd_user),(int(result[1]), str(user2[0]),)).fetchone()
         base.commit()
-    if win_user_id == name_users[1]:  # если победительИД равен юзеру2
+    if win_user_id == name_users[1]:  # если победитель_id равен юзеру2
         if dbg_info_in_console == 'yes':
             log_in_db('admin', f'[DBG] 🚩 2 win_user_id == {str(name_users[1])}')
         result = elo.get_new_ratings([int(user2[6]), int(user1[6])])
         cur.execute('Update {} set elo = ?  WHERE user_id == ?'.format(bd_user),(int(result[0]), str(user1[0]),)).fetchone()
         cur.execute('Update {} set elo = ?  WHERE user_id == ?'.format(bd_user),(int(result[1]), str(user2[0]),)).fetchone()
         base.commit()
-    log_in_db('admin', f'DBG_ 🚩 new ELO:  {rtn_name_on_id(user1[0])}={(str(result[0]))} : {rtn_name_on_id(user2[0])}={(str(result[1]))}')
+    log_in_db('admin', f'DBG_ 🚩 new ELO:  {return_name_on_id(user1[0])}={(str(result[0]))} : {return_name_on_id(user2[0])}={(str(result[1]))}')
 
 @bot.event
 async def on_raw_reaction_remove(payload):  # чекает реакции на удаление
