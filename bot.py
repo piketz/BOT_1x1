@@ -67,7 +67,7 @@ class bot_loop(commands.Cog):
     ####
     @tasks.loop(minutes=1.0)  # выполняется каждую минуту
     async def bmain(self):
-        channel_dbg = await bot.fetch_channel(id_channel)
+        channel = await bot.fetch_channel(id_channel)
         now = datetime.datetime.now()
         endmatchtime2 = now + datetime.timedelta(days=days_create_match)
         endmatchtime = endmatchtime2.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -89,18 +89,18 @@ class bot_loop(commands.Cog):
 
             cur.execute('UPDATE match SET match_end = 1 WHERE check_ok=0 and match_end = 0'.format(bd_match)).fetchone() # отметить все матчи завершеными.
             base.commit()
-            await channel_dbg.send('Время вышло. Все матчи завершены')
+            await channel.send('Время вышло. Все матчи завершены')
 
             pari = create_new_matchs()  # создать новые матчи
             for i in pari[0]:
                 if dbg_info_in_console == 'yes': log_in_db('admin', f'[MSG] {i[0]} против {i[1]}')
-                message = await channel_dbg.send('<@' + i[0] + '> vs <@' + i[1] + '>')  # отправляем и получаем ИД сообщения о матче
+                message = await channel.send('<@' + i[0] + '> vs <@' + i[1] + '>')  # отправляем и получаем ИД сообщения о матче
                 if dbg_info_in_console == 'yes':  log_in_db('admin', f'[DBG] создан матч  {str(message.id)}')
                 # cur.execute('INSERT INTO {} VALUES(?, ?, ?, ?, ?, ?, ?, ?)'.format(bd_match),(message.id,i[0],i[1],0,0,0,0,0)).fetchone()
                 cur.execute('INSERT INTO {} (id,user_1,user_2) VALUES(?, ?, ?)'.format(bd_match),(message.id, i[0], i[1])).fetchone()
                 base.commit()
             pari[1] = str(pari[1])
-            await channel_dbg.send('<@' + str(pari[1][2:-2]) + '> остался без соперника')  # один остался без пары
+            await channel.send('<@' + str(pari[1][2:-2]) + '> остался без соперника')  # один остался без пары
             # создать запись о датах начала и конца недели
             cur.execute('INSERT INTO weekend (date_start,date_end,player_play,player_not_play)'
                         ' VALUES (?,?,?,?)',(str(now), str(endmatchtime), 0, 0)).fetchone()
