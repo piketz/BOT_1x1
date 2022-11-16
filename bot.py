@@ -4,22 +4,17 @@ import sqlite3
 import itertools
 from discord.ext import tasks, commands
 from multielo import MultiElo
-from pathlib import Path
 
 bot = commands.Bot(command_prefix='!')
 bd_match = 'match'
 bd_user = 'users'
 bd_log = 'log'
 elo = MultiElo()
-dbg_info_in_channel = 'no'
+dbg_info_in_channel = 'yes'
 dbg_info_in_console = 'yes'
 days_create_match = 1
 start_elo = 100
 id_channel = '912553521629495336'  # impulse_test channel 916723980113682452 #dbg 912553521629495336
-
-fle = Path('botkey.txt')
-fle.touch(exist_ok=True)
-bot_key_api_file = open(fle)
 
 
 
@@ -29,7 +24,8 @@ def bd_backup(status=''):
         print(f'Copied {total - remaining} of {total} pages...')
 
     now = datetime.datetime.now()
-    bkp_name = 'backup_' + str(status) + ' ' + str(now.year) + '.' + str(now.month) + '.' + str(now.day) + ' ' + str(now.hour) + '_' + str(now.minute) + '_' + str(now.second) + '.db'
+    bkp_name = 'backup_' + str(status) + ' ' + str(now.year) + '.' + str(now.month) + '.' + str(now.day) + ' ' + str(
+        now.hour) + '_' + str(now.minute) + '_' + str(now.second) + '.db'
     con = sqlite3.connect('bd.db')
     bck = sqlite3.connect(bkp_name)
     with bck:
@@ -49,7 +45,6 @@ class bot_loop(commands.Cog):
     def cog_unload(self):
         self.bmain.cancel()
 
-
     @tasks.loop(hours=12.0)
     async def bkp(self):
         print(f'DBG_ 🚩 [!!!!] Прошло 12 часов')
@@ -62,7 +57,8 @@ class bot_loop(commands.Cog):
         endmatchtime2 = now + datetime.timedelta(days=days_create_match)
         endmatchtime = endmatchtime2.replace(hour=0, minute=0, second=0, microsecond=0)
 
-        lastgame_create_time_sql = cur.execute('SELECT MAX(date_end) FROM weekend').fetchone()  # запрос из бд по самой последней дате в колонке date_end
+        lastgame_create_time_sql = cur.execute(
+            'SELECT MAX(date_end) FROM weekend').fetchone()  # запрос из бд по самой последней дате в колонке date_end
         lastgame_create = datetime.datetime.strptime(lastgame_create_time_sql[0], "%Y-%m-%d %H:%M:%S")
         # print('now ----  lastgame_time '+str(now.day)+'.'+str(now.month)+'.'+str(now.year)+'  ----  '+str(lastgame_time.day)+'.'+str(lastgame_time.month)+'.'+str(lastgame_time.year))
         chk_ok = cur.execute('SELECT id FROM match where match_end=0 and check_1=1 and check_2=1 and check_ok=0')
@@ -74,13 +70,15 @@ class bot_loop(commands.Cog):
             base.commit()
 
         if now >= lastgame_create:
-            cur.execute('UPDATE match SET match_end = 1 WHERE check_ok=0 and match_end = 0').fetchone() # отметить все матчи завершеными.
+            cur.execute(
+                'UPDATE match SET match_end = 1 WHERE check_ok=0 and match_end = 0').fetchone()  # отметить все матчи завершеными.
             base.commit()
             await channel.send('Время вышло. Все матчи завершены')
 
             pari = create_new_matchs()  # создать новые матчи
             for user_id in pari[0]:
-                message = await channel.send(f'<@{user_id[0]}> vs <@{user_id[1]}>')  # отправляем сообщения и получаем ИД о матче
+                message = await channel.send(
+                    f'<@{user_id[0]}> vs <@{user_id[1]}>')  # отправляем сообщения и получаем ИД о матче
                 if dbg_info_in_console == 'yes': log_in_db('admin',
                                                            f'[MSG] создан матч  {str(message.id)}. '
                                                            f'{return_name_on_id(user_id[0])} против '
@@ -95,6 +93,7 @@ class bot_loop(commands.Cog):
                         f'("{str(now)}","{str(endmatchtime)}",0,0)')
             base.commit()
             bd_backup()
+
 
 # def hello_world(): # для создания второго потока и отсчета времени. работает но закрыть бот нужно через диспетчер задач
 #  while True:
@@ -120,6 +119,7 @@ async def reg(ctx, info=None):
         log_in_db(user_id, f' Registred user {str(return_name_on_id(user_id))}', name_server)
     else:
         await ctx.send('уже есть пользователь ' + ctx.author.name)
+
 
 @bot.event
 async def on_raw_reaction_add(payload):  # чекает новые реакции
@@ -206,7 +206,6 @@ async def on_raw_reaction_add(payload):  # чекает новые реакци�
                     cur.execute(f'Update {bd_user} set win = win + 1 WHERE user_id = "{str(user_id)}"').fetchone()
                     base.commit()
 
-
     if str(check_emoji) == '🚫' and not id_match == None and not str(id_match[7]) == '1':  #
         if int(id_match[1]) == user_id:  # первый игрок 🚫
             await channel.send(f'<@{str(user_id)}> отчитался о проигрыше')
@@ -256,6 +255,7 @@ async def on_raw_reaction_add(payload):  # чекает новые реакци�
                     cur.execute(f'Update {bd_user} set los = los + 1 WHERE user_id = "{str(user_id)}"').fetchone()
                     base.commit()
 
+
 def create_new_matchs():
     global non_in_game_id
     user_list = []  # Список игроков ID
@@ -268,8 +268,9 @@ def create_new_matchs():
         user_elo_id[str(user[0])] = user[1]
         name[str(user[0])] = user[2]
 
-    raunds = {i: abs(user_elo_id[i[0]] - user_elo_id[i[1]]) for i in itertools.combinations(user_list, 2)} #Все комбинации для игры с разницей рейтинга
-    sorted_tuple = sorted(raunds.items(), key=lambda x: x[1]) #Отсортированно по разнице рейтинга
+    raunds = {i: abs(user_elo_id[i[0]] - user_elo_id[i[1]]) for i in
+              itertools.combinations(user_list, 2)}  # Все комбинации для игры с разницей рейтинга
+    sorted_tuple = sorted(raunds.items(), key=lambda x: x[1])  # Отсортированно по разнице рейтинга
     user_filter = []
     pari = []
     pari_n = []
@@ -283,22 +284,28 @@ def create_new_matchs():
 
     if dbg_info_in_console == 'yes':
         print(f' Пары для игры \n{pari_n}')
-        print(f' Этот ID не играет сегодня {set(user_list) - set(user_filter)}, его имя {name[list(set(user_list) - set(user_filter))[0]]}')
+        print(
+            f' Этот ID не играет сегодня {set(user_list) - set(user_filter)}, его имя {name[list(set(user_list) - set(user_filter))[0]]}')
         non_in_game_id = set(user_list) - set(user_filter)
-    return [pari,non_in_game_id]
+    return [pari, non_in_game_id]
+
 
 @bot.command(brief='Тестовая команда для создания матчей')
 async def t2(ctx):
     pari = create_new_matchs()
-    if dbg_info_in_console == 'yes': log_in_db(ctx.author.id, f'[DBG] pari = {str(pari[1])} type {type(pari)}', ctx.guild.name)
+    if dbg_info_in_console == 'yes': log_in_db(ctx.author.id, f'[DBG] pari = {str(pari[1])} type {type(pari)}',
+                                               ctx.guild.name)
     for i in pari[0]:
         if dbg_info_in_console == 'yes': log_in_db(ctx.author.id, f'[MSG] {i[0]} против {i[1]}', ctx.guild.name)
         message = await ctx.send('<@' + i[0] + '> vs <@' + i[1] + '>')  # отправляем и получаем ИД сообщения о матче
-        if dbg_info_in_console == 'yes': log_in_db(ctx.author.id, f'[DBG] создан матч {str(message.id)}', ctx.guild.name)
-        cur.execute('INSERT INTO {} (id,user_1,user_2) VALUES(?, ?, ?)'.format(bd_match),(message.id, i[0], i[1])).fetchone()
+        if dbg_info_in_console == 'yes': log_in_db(ctx.author.id, f'[DBG] создан матч {str(message.id)}',
+                                                   ctx.guild.name)
+        cur.execute('INSERT INTO {} (id,user_1,user_2) VALUES(?, ?, ?)'.format(bd_match),
+                    (message.id, i[0], i[1])).fetchone()
         base.commit()
     pari[1] = str(pari[1])
     await ctx.send('<@' + str(pari[1][2:-2]) + '> остался без соперника')  # один остался без пары
+
 
 @bot.command(brief='Create challenge', description='Через пробел указать противника')
 async def vs(ctx, arg=None):
@@ -311,12 +318,19 @@ async def vs(ctx, arg=None):
     user2_chk = cur.execute('SELECT user_id FROM {} WHERE user_id == ?'.format(bd_user), (user2_id,)).fetchone()
     if user2_chk == None or str(user1_id) == user2_id: return
     challenge = return_name_on_id(user1_id)
-    if dbg_info_in_console == 'yes': log_in_db(ctx.author.id, f'msg {return_name_on_id(user1_id)} против {return_name_on_id(user2_id)}', ctx.guild.name)
-    message = await ctx.send('<@' + str(user1_id) + '> vs <@' + str(user2_id) + '>')  # отправляем и получаем ИД сообщения о матче
-    if dbg_info_in_console == 'yes': log_in_db(ctx.author.id, f'[INFO] VS создан матч {str(message.id)}', ctx.guild.name)
-    cur.execute('INSERT INTO {} (id,user_1,user_2,challenge) VALUES(?, ?, ?, ?)'.format(bd_match),(message.id, str(user1_id), user2_id, challenge)).fetchone()
+    if dbg_info_in_console == 'yes': log_in_db(ctx.author.id,
+                                               f'msg {return_name_on_id(user1_id)} против {return_name_on_id(user2_id)}',
+                                               ctx.guild.name)
+    message = await ctx.send(
+        '<@' + str(user1_id) + '> vs <@' + str(user2_id) + '>')  # отправляем и получаем ИД сообщения о матче
+    if dbg_info_in_console == 'yes': log_in_db(ctx.author.id, f'[INFO] VS создан матч {str(message.id)}',
+                                               ctx.guild.name)
+    cur.execute('INSERT INTO {} (id,user_1,user_2,challenge) VALUES(?, ?, ?, ?)'.format(bd_match),
+                (message.id, str(user1_id), user2_id, challenge)).fetchone()
     base.commit()
-    log_in_db(ctx.author.id, f'[INFO] VS message.id={message.id} user1_id={user1_id} user2_id={user2_id}', ctx.guild.name)
+    log_in_db(ctx.author.id, f'[INFO] VS message.id={message.id} user1_id={user1_id} user2_id={user2_id}',
+              ctx.guild.name)
+
 
 @bot.command(brief='Admin tools', description='Через пробел указать админа')
 async def adminreg(ctx, arg=None):
@@ -324,12 +338,14 @@ async def adminreg(ctx, arg=None):
     name_server = ctx.guild.name
     user_id = ctx.author.id
     user_add = (str(arg[3:-1]))
-    admin_chk = cur.execute('SELECT user_id FROM {} WHERE adm == 1 AND user_id == ?'.format(bd_user), (user_id,)).fetchone()
+    admin_chk = cur.execute('SELECT user_id FROM {} WHERE adm == 1 AND user_id == ?'.format(bd_user),
+                            (user_id,)).fetchone()
     if admin_chk == None or str(user_id) == user_add: return
     if user_id == admin_chk[0]:
-        cur.execute('Update {} set adm = 1  WHERE user_id == ?'.format(bd_user),(str(user_add),)).fetchone()
+        cur.execute('Update {} set adm = 1  WHERE user_id == ?'.format(bd_user), (str(user_add),)).fetchone()
         base.commit()
         log_in_db(user_id, f'[ADM] add admin {str(return_name_on_id(user_add))}', name_server)
+
 
 @bot.command(brief='Admin tools', description='Через пробел указать админа')
 async def admindel(ctx, arg=None):
@@ -337,7 +353,8 @@ async def admindel(ctx, arg=None):
     name_server = ctx.guild.name
     user_id = ctx.author.id
     user_add = (str(arg[3:-1]))
-    admin_chk = cur.execute('SELECT user_id FROM {} WHERE adm == 1 AND user_id == ?'.format(bd_user), (user_id,)).fetchone()
+    admin_chk = cur.execute('SELECT user_id FROM {} WHERE adm == 1 AND user_id == ?'.format(bd_user),
+                            (user_id,)).fetchone()
     if admin_chk == None or str(user_id) == user_add: return
     if user_id == admin_chk[0]:
         cur.execute('Update {} set adm = 0  WHERE user_id == ?'.format(bd_user), (str(user_add),)).fetchone()
@@ -345,18 +362,22 @@ async def admindel(ctx, arg=None):
         print(f'DBG_ [ADMIN] !admindel now admin = {str(return_name_on_id(user_add))}')
         log_in_db(user_id, f'[ADM] del admin {str(return_name_on_id(user_add))}', name_server)
 
-def log_in_db(user_id='admin',command=None,server=None):
+
+def log_in_db(user_id='admin', command=None, server=None):
     time_now = datetime.datetime.now()
-    user_id = user_id.replace('_', '') #небольшая защита от иньекций из имени пользователя
+    user_id = user_id.replace('_', '')  # небольшая защита от иньекций из имени пользователя
     if type(user_id) == int:
         user_name = str(return_name_on_id(user_id))
     else:
         user_name = str(user_id)
-    cur.execute(f'INSERT INTO {bd_log} (user,command,date,server) VALUES("{user_name}", "{str(command)}", "{str(time_now)}", "{str(server)}")')
+    cur.execute(
+        f'INSERT INTO {bd_log} (user,command,date,server) VALUES("{user_name}", "{str(command)}", "{str(time_now)}", "{str(server)}")')
     base.commit()
+
 
 def return_name_on_id(user_id):
     return (str(cur.execute('SELECT name FROM {} WHERE user_id == ?'.format(bd_user), (user_id,)).fetchone())[2:-3])
+
 
 def end_match_elo(win_user_id, los_user_id, id_mess):
     name_users = cur.execute('SELECT user_1,user_2 FROM {} WHERE id == ?'.format(bd_match), (id_mess,)).fetchone()
@@ -372,17 +393,23 @@ def end_match_elo(win_user_id, los_user_id, id_mess):
         if dbg_info_in_console == 'yes':
             log_in_db('admin', f'[DBG] 🚩 1 win_user_id == {str(name_users[0])}')
         result = elo.get_new_ratings([int(user1[6]), int(user2[6])])
-        cur.execute('Update {} set elo = ?  WHERE user_id == ?'.format(bd_user),(int(result[0]), str(user1[0]),)).fetchone()
-        cur.execute('Update {} set elo = ?  WHERE user_id == ?'.format(bd_user),(int(result[1]), str(user2[0]),)).fetchone()
+        cur.execute('Update {} set elo = ?  WHERE user_id == ?'.format(bd_user),
+                    (int(result[0]), str(user1[0]),)).fetchone()
+        cur.execute('Update {} set elo = ?  WHERE user_id == ?'.format(bd_user),
+                    (int(result[1]), str(user2[0]),)).fetchone()
         base.commit()
     if win_user_id == name_users[1]:  # если победитель_id равен юзеру2
         if dbg_info_in_console == 'yes':
             log_in_db('admin', f'[DBG] 🚩 2 win_user_id == {str(name_users[1])}')
         result = elo.get_new_ratings([int(user2[6]), int(user1[6])])
-        cur.execute('Update {} set elo = ?  WHERE user_id == ?'.format(bd_user),(int(result[0]), str(user1[0]),)).fetchone()
-        cur.execute('Update {} set elo = ?  WHERE user_id == ?'.format(bd_user),(int(result[1]), str(user2[0]),)).fetchone()
+        cur.execute('Update {} set elo = ?  WHERE user_id == ?'.format(bd_user),
+                    (int(result[0]), str(user1[0]),)).fetchone()
+        cur.execute('Update {} set elo = ?  WHERE user_id == ?'.format(bd_user),
+                    (int(result[1]), str(user2[0]),)).fetchone()
         base.commit()
-    log_in_db('admin', f'[DBG] 🚩 new ELO:  {return_name_on_id(user1[0])}={(str(result[0]))} : {return_name_on_id(user2[0])}={(str(result[1]))}')
+    log_in_db('admin',
+              f'[DBG] 🚩 new ELO:  {return_name_on_id(user1[0])}={(str(result[0]))} : {return_name_on_id(user2[0])}={(str(result[1]))}')
+
 
 @bot.event
 async def on_raw_reaction_remove(payload):  # чекает реакции на удаление
@@ -428,6 +455,7 @@ async def on_raw_reaction_remove(payload):  # чекает реакции на �
             cur.execute('Update {} set win2 = ? WHERE id == ?'.format(bd_match), ('0', id_mess,)).fetchone()
             base.commit()
 
+
 @bot.command(pass_context=True, brief='Тестовая команда')
 async def tst_list(ctx):
     a = []
@@ -436,6 +464,7 @@ async def tst_list(ctx):
     for user in users:
         a.append(str(user[2]) + ' ' + str(user[1]) + '')
     await ctx.send(a)
+
 
 if __name__ == '__main__':
     @bot.event
@@ -449,4 +478,13 @@ if __name__ == '__main__':
             print('conn db.. Ok')
         bot_loop()
 
-    bot.run(bot_key_api_file.read())
+    file_path = 'botkey.txt'
+    try:
+        bot_key_api_file = open(file_path)
+        bot.run(bot_key_api_file.read())
+    except IOError:
+        bot_key_api_file = open(file_path, 'w+')
+        print('Добавьте API-key в файл botkey.txt')
+
+
+
